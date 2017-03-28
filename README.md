@@ -1,5 +1,8 @@
 # python.edu_AF_project
 
+3/28/2017 - Catherine
+Continued adding files.  Changed the code to assign keys a bit. 
+
 3/27/2017 - Catherine<br>
 Continued working on district files. Added indexes. Removed extra columns. Added flags. Joined files.
 <br>Will go through and review files to see what indicators may be missing.
