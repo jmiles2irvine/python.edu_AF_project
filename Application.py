@@ -1,128 +1,5 @@
 import pandas as pd
 import numpy as np
-
-def main():
-    district, districtGeometry, districtType, districtRatings, districtAEA, districtDistinctions, districtReference, \
-        districtECHS, districtStaffStudents, districtWealth, districtChapter41, districtChapter41Recapture, districtExpenditures \
-        = readDistrictFiles()
-    district = combineDistrictFiles(district, districtGeometry, districtType, districtRatings, districtAEA,
-                                    districtDistinctions, districtReference, districtECHS, districtStaffStudents, 
-                                    districtWealth, districtChapter41, districtChapter41Recapture, districtExpenditures)
-
-def readDistrictFiles(): 
-    #read in csv files
-    district = pd.read_csv('tea directory districts.csv', usecols= {0,1,2,3,4}, index_col = 0)
-    districtGeometry = pd.read_csv('district_geometry.csv', usecols={'DISTRICT_N','Area'}, index_col = 'DISTRICT_N')
-    #districtGeometry['DISTRICT_N']=fixZeros(list(districtGeometry['DISTRICT_N']))
-    districtType = pd.read_csv('district type.csv', usecols = {1,2,3}, index_col = 'District')
-    districtRatings = pd.read_csv('district ratings.csv', index_col = 'District_Number')   
-    districtAEA = pd.read_csv('aea districts.csv', usecols = {1}, index_col = 'District Number')
-    
-    #read in xlsx files
-    districtDistinctions = pd.read_excel('district_distinctions.xlsx', sheetname=0, index_col = 'DISTRICT')
-    districtReference = pd.read_excel('district_reference.xlsx', sheetname=0, index_col = 'DISTRICT')
-    districtStaffStudents = pd.read_excel('TAPR DISTPROF.xlsx', sheetname=0, index_col = 'DISTRICT',
-                                          na_values = ['.',-1,-2,-3],
-                                          parse_cols = [0,47,89,90,91,92,93,94,95,96,97,99,100,
-                                                        101,102,104,123,132,150,171,172,173,247,248,253,257])
-    districtECHS = pd.read_excel('Early College High Schools 15-16 list.xlsx', sheetname=0)
-    districtChapter41 = pd.read_excel('2015-2016 Revised Final Chapter 41 Districts.xlsx',sheetname=0, parse_cols = [0], index_col = [0])
-    districtChapter41Recapture = pd.read_excel('ch41_2016_recapture_funds.xlsx',sheetname=0, parse_cols = [1,3], index_col = [0])
-    districtExpenditures = pd.read_excel('Total Operating Expenditures 2015 by School District.xlsx',sheetname=0, index_col =[0])
-    
-    #read in xls files
-    districtWealth = pd.read_excel('Wealth per WADA 2016.xls', sheetname=0, index_col = 'DISTRICT')
-    
-    #get unique values from campus ECHS list as new object
-    districtECHS = pd.DataFrame({'DISTRICT_N':districtECHS.DistrictNumber.unique(), 'ECHS_FLAG':'Y'}) 
-    
-    #add missing index
-    districtECHS.set_index('DISTRICT_N', inplace = True)
-
-    #add flags
-    districtAEA['AEA_FLAG'] = 'Y'
-    districtDistinctions['DISTINCTION_FLAG'] = np.where(districtDistinctions['DAD_POST']=='1','Y','N')
-    districtChapter41['CHAPTER41_FLAG'] = 'Y'
-    districtChapter41Recapture['RECAPTURE_FLAG'] = np.where(districtChapter41Recapture['2016   Total Recapture']>0,'Y','N')
-    
-    #remove extra columns
-    districtRatings.drop(districtRatings.columns[[0,2,3]], axis=1, inplace=True)
-    districtReference = districtReference[['DFLCHART','DI1_MET','DI1','DI2_MET','DI2','DI3_MET',
-                                           'DI3','DI4_MET','DI4']]
-    districtDistinctions = districtDistinctions[['DISTINCTION_FLAG']]
-    districtWealth.drop(districtWealth.columns[[0]], axis=1, inplace=True)
-import pandas as pd
-import numpy as np
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-import seaborn as sns
-sns.set(style="whitegrid", color_codes=True)
-
-def main():
-    district, districtGeometry, districtType, districtRatings, districtAEA, districtDistinctions, districtReference, \
-        districtECHS, districtStaffStudents, districtWealth, districtChapter41, districtChapter41Recapture, districtExpenditures \
-        = readDistrictFiles()
-    district = combineDistrictFiles(district, districtGeometry, districtType, districtRatings, districtAEA,
-                                    districtDistinctions, districtReference, districtECHS, districtStaffStudents, 
-                                    districtWealth, districtChapter41, districtChapter41Recapture, districtExpenditures)
-    histogramPredictors(district)
-    
-def readDistrictFiles(): 
-    #read in csv files
-    district = pd.read_csv('tea directory districts.csv', usecols= {0,1,2,3,4}, index_col = 0)
-    districtGeometry = pd.read_csv('district_geometry.csv', usecols={'DISTRICT_N','Area'}, index_col = 'DISTRICT_N')
-    #districtGeometry['DISTRICT_N']=fixZeros(list(districtGeometry['DISTRICT_N']))
-    districtType = pd.read_csv('district type.csv', usecols = {1,2,3}, index_col = 'District')
-    districtRatings = pd.read_csv('district ratings.csv', index_col = 'District_Number', na_values=[' '])   
-    districtAEA = pd.read_csv('aea districts.csv', usecols = {1}, index_col = 'District Number')
-    
-    #read in xlsx files
-    districtDistinctions = pd.read_excel('district_distinctions.xlsx', sheetname=0, index_col = 'DISTRICT')
-    districtReference = pd.read_excel('district_reference.xlsx', sheetname=0, index_col = 'DISTRICT')
-    districtStaffStudents = pd.read_excel('TAPR DISTPROF.xlsx', sheetname=0, index_col = 'DISTRICT',
-                                          na_values = ['.',-1,-2,-3],
-                                          parse_cols = [0,47,89,90,91,92,93,94,95,96,97,99,100,
-                                                        101,102,104,123,132,150,171,172,173,247,248,253,257])
-    districtECHS = pd.read_excel('Early College High Schools 15-16 list.xlsx', sheetname=0)
-    districtChapter41 = pd.read_excel('2015-2016 Revised Final Chapter 41 Districts.xlsx',sheetname=0, parse_cols = [0], index_col = [0])
-    districtChapter41Recapture = pd.read_excel('ch41_2016_recapture_funds.xlsx',sheetname=0, parse_cols = [1,3], index_col = [0])
-    districtExpenditures = pd.read_excel('Total Operating Expenditures 2015 by School District.xlsx',sheetname=0, index_col =[0])
-    
-    #read in xls files
-    districtWealth = pd.read_excel('Wealth per WADA 2016.xls', sheetname=0, index_col = 'DISTRICT')
-    
-    #get unique values from campus ECHS list as new object
-    districtECHS = pd.DataFrame({'DISTRICT_N':districtECHS.DistrictNumber.unique(), 'ECHS_FLAG':'Y'}) 
-    
-    #add missing index
-    districtECHS.set_index('DISTRICT_N', inplace = True)
-
-    #add flags
-    districtAEA['AEA_FLAG'] = 'Y'
-    districtDistinctions['DISTINCTION_FLAG'] = np.where(districtDistinctions['DAD_POST']=='1','Y','N')
-    districtChapter41['CHAPTER41_FLAG'] = 'Y'
-    districtChapter41Recapture['RECAPTURE_FLAG'] = np.where(districtChapter41Recapture['2016   Total Recapture']>0,'Y','N')
-    
-    #remove extra columns
-    districtRatings.drop(districtRatings.columns[[0,2,3]], axis=1, inplace=True)
-    districtReference = districtReference[['DFLCHART','DI1_MET','DI1','DI2_MET','DI2','DI3_MET',
-                                           'DI3','DI4_MET','DI4']]
-    districtDistinctions = districtDistinctions[['DISTINCTION_FLAG']]
-    districtWealth.drop(districtWealth.columns[[0]], axis=1, inplace=True)
-    
-    #rename index columns to standard name
-    district.index.names = ['DISTRICT_N']
-    districtGeometry.index.names = ['DISTRICT_N']
-    districtType.index.names = ['DISTRICT_N']
-    districtRatings.index.names = ['DISTRICT_N']
-    districtDistinctions.index.names = ['DISTRICT_N']
-    districtReference.index.names = ['DISTRICT_N']
-    districtStaffStudents.index.names = ['DISTRICT_N']
-    districtWealth.index.names = ['DISTRICT_N']
-    districtChapter41.index.names = ['DISTRICT_N'] 
-    districtChapter41Recapture.index.names = ['DISTRICT_N']
-import pandas as pd
-import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -257,7 +134,8 @@ def fixMissing(district):
     #fix other string cols
     ob_cols = list(district.select_dtypes(include=['object']).columns)
     for i in ob_cols:
-        district[i] = district[i].fillna('Missing')      
+        district[i] = district[i].fillna('Missing')
+        
     return district
     
 def histogramPredictors(district):
