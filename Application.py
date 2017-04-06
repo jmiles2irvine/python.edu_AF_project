@@ -12,15 +12,17 @@ def main():
     district = combineDistrictFiles(district, districtGeometry, districtType, districtRatings, districtAEA,
                                     districtDistinctions, districtReference, districtECHS, districtStaffStudents, 
                                     districtWealth, districtChapter41, districtChapter41Recapture, districtExpenditures)
+    district = removeNotRated(district)
+    district = fixString(district)
     district = fixMissing(district)
-    histogramPredictors(district)
+    toCSV(district)
+    #histogramPredictors(district)
     
 def readDistrictFiles(): 
     #read in csv files
     district = pd.read_csv('tea directory districts.csv', usecols= {0,1,2,3,4}, index_col = 0)
     districtGeometry = pd.read_csv('district_geometry.csv', usecols={'DISTRICT_N','Area'}, index_col = 'DISTRICT_N')
-    #districtGeometry['DISTRICT_N']=fixZeros(list(districtGeometry['DISTRICT_N']))
-    districtType = pd.read_csv('district type.csv', usecols = {1,2,3}, index_col = 'District')
+    districtType = pd.read_csv('district type.csv', usecols = {1,3}, index_col = 'District')
     districtRatings = pd.read_csv('district ratings.csv', index_col = 'District_Number', na_values=[' '])  
     districtAEA = pd.read_csv('aea districts.csv', usecols = {1}, index_col = 'District Number')
     
@@ -46,15 +48,20 @@ def readDistrictFiles():
     districtECHS.set_index('DISTRICT_N', inplace = True)
 
     #add flags
+    districtReference['MAGNET_DISTRICT_FLAG'] = np.where(districtReference.index==31916,'Y','N')
+    districtReference['MILITARY_BASE_FLAG'] = np.where((districtReference.index==15914) | (districtReference.index==15913) | 
+                (districtReference.index==15906),'Y','N')
     districtAEA['AEA_FLAG'] = 'Y'
     districtDistinctions['DISTINCTION_FLAG'] = np.where(districtDistinctions['DAD_POST']=='1','Y','N')
     districtChapter41['CHAPTER41_FLAG'] = 'Y'
     districtChapter41Recapture['RECAPTURE_FLAG'] = np.where(districtChapter41Recapture['2016   Total Recapture']>0,'Y','N')
     
     #remove extra columns
-    districtRatings.drop(districtRatings.columns[[0,2,3]], axis=1, inplace=True)
-    districtReference = districtReference[['DFLCHART','DI1_MET','DI1','DI2_MET','DI2','DI3_MET',
-                                           'DI3','DI4_MET','DI4']]
+    districtRatings.drop(districtRatings.columns[[0,1,2,3]], axis=1, inplace=True)
+    districtReference = districtReference[['DFLCHART','MAGNET_DISTRICT_FLAG','MILITARY_BASE_FLAG'
+                                           ,'DI1_MET','DI1','DI2_MET','DI2','DI3_MET',
+                                           'DI3','DI4_MET','DI4'
+                                           ]]
     districtDistinctions = districtDistinctions[['DISTINCTION_FLAG']]
     districtWealth.drop(districtWealth.columns[[0]], axis=1, inplace=True)
     
@@ -111,7 +118,7 @@ def combineDistrictFiles(district, districtGeometry, districtType, districtRatin
     district = district.join(districtType,how='left')
     district = district.join(districtAEA,how='left')
     district = district.join(districtECHS,how='left')
-    district = district.join(districtRatings,how='left')
+    district = district.join(districtRatings,how='inner')
     district = district.join(districtDistinctions,how='left')
     district = district.join(districtStaffStudents,how='left')
     district = district.join(districtWealth,how='left')
@@ -121,7 +128,43 @@ def combineDistrictFiles(district, districtGeometry, districtType, districtRatin
     
     #convert all column names to upper case for cleanliness
     district.columns = district.columns.str.upper()
-    #district.to_csv('district_combined.csv',sep=',')
+    return district
+
+def convertToCategorical(value):
+    #Use this function to convert a field to categorical
+    #Still need to apply this to the fields somewhow
+    if value == "A":
+        return 1
+    elif value == "B":
+        return 2
+    elif value == "C":
+        return 3
+    elif value == "D":
+        return 4
+    elif value == "F":
+        return 5
+    else:
+        return 6
+
+#def convertPredictors(district):
+    #use this function to convert the A-F fields to categorical fields with labels
+    #consider as alternative
+#    grade_cols = [col for col in district.columns if 'GRADE' in col]
+#    for i in ob_cols:
+#        district[i] = district[i].fillna('Missing')
+ #   print(grade_cols)
+ #   return district
+        
+def removeNotRated(district):
+    #Remove districts that did not receive any ratings
+    grade_cols = [col for col in district.columns if 'GRADE' in col]
+    district.dropna(subset = [grade_cols],how='all', inplace=True)
+    return district
+
+def fixString(district):
+    #change numeric fields to strings (where the number is just an unordered category)
+    district['COUNTY_NUMBER'] = district['COUNTY_NUMBER'].apply(str)
+    district['REGION_NUMBER'] = district['REGION_NUMBER'].apply(str)
     return district
     
 def fixMissing(district):
@@ -137,6 +180,9 @@ def fixMissing(district):
         district[i] = district[i].fillna('Missing')
         
     return district
+    
+def toCSV(district):
+        district.to_csv('district_combined.csv',sep=',')
     
 def histogramPredictors(district):
     #http://seaborn.pydata.org/tutorial/categorical.html
