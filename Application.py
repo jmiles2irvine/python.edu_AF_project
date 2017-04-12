@@ -194,7 +194,11 @@ def histogramPredictors(district):
 def logTransform(district):
     district['log2015_TOTAL_OPERATING_EXPENDITURES'] = np.log(district['2015_TOTAL_OPERATING_EXPENDITURES'])
     district['log2015_OPERATING_EXPENDITURES_PER_STUDENT'] = np.log(district['2015_OPERATING_EXPENDITURES_PER_STUDENT'])
-
+    district['logAREA'] = np.log(district['AREA'])
+    district['log2016_ENROLLMENT'] = np.log(district['2016_ENROLLMENT'])
+    district['log2016_WADA'] = np.log(district['2016_WADA'])
+    district['log2014_PROP_VAL'] = np.log(district['2014_PROP_VAL']) 
+    district['log2016_WEALTH_PER_WADA'] = np.log(district['2016_WEALTH_PER_WADA']) 
     return district
     
 main()
