@@ -15,6 +15,7 @@ def main():
     district = removeNotRated(district)
     district = fixString(district)
     district = fixMissing(district)
+    district = logTransform(district)
     toCSV(district)
     #histogramPredictors(district)
     
@@ -189,5 +190,11 @@ def histogramPredictors(district):
     
     orderList = district.DOMAIN_I_LETTER_GRADE.unique()
     sns.countplot(x='DOMAIN_I_LETTER_GRADE', data=district, palette="Greens_d", order=sorted(orderList.tolist()));
+
+def logTransform(district):
+    district['log2015_TOTAL_OPERATING_EXPENDITURES'] = np.log(district['2015_TOTAL_OPERATING_EXPENDITURES'])
+    district['log2015_OPERATING_EXPENDITURES_PER_STUDENT'] = np.log(district['2015_OPERATING_EXPENDITURES_PER_STUDENT'])
+
+    return district
     
 main()
